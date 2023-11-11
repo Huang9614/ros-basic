@@ -86,7 +86,19 @@
   - `rosrun rqt_plot rqt_plot` 在滚动时间图上显示发布到某个话题上的数据
 
 - rosservice
-  
+  服务（Services）是节点之间通讯的另一种方式。服务允许节点发送一个请求（request）并获得一个响应（response）; rosservice可以很容易地通过服务附加到ROS客户端/服务器框架上
+
+  ```bash
+  rosservice list         输出活跃服务的信息
+  rosservice call         用给定的参数调用服务
+  rosservice type         输出服务的类型
+  rosservice find         按服务的类型查找服务
+  rosservice uri          输出服务的ROSRPC uri
+  ```
+  - `rosservice list` 输出活跃de服务
+  - `rosservice type /clear` 看clear服务的类型
+    - 服务的类型为empty（空），这表明调用这个服务时不需要参数（即，它在发出请求时不发送数据，在接收响应时也不接收数据）
+  - `rosservice call /clear` 因为服务的类型为empty，所以进行无参数调用;
 - rosparam
   
 - rqt_console
