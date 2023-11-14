@@ -100,10 +100,20 @@
     - 服务的类型为empty（空），这表明调用这个服务时不需要参数（即，它在发出请求时不发送数据，在接收响应时也不接收数据）
   - `rosservice call /clear` 因为服务的类型为empty，所以进行无参数调用;
 - rosparam
-  
+  - rosparam能让我们在ROS参数服务器（Parameter Server）上存储和操作数据
+  - rosparam使用YAML标记语言的语法。一般而言，YAML的表述很自然：1是整型，1.0是浮点型，one是字符串，true是布尔型，[1, 2, 3]是整型组成的列表，{a: b, c: d}是字典
+  - `rosparam list` 可以看到turtlesim节点在参数服务器上有3个参数用于设定背景颜色
+  - `rosparam set /turtlesim/background_r 150` 修改背景颜色的红色通道值
+  - `rosservice call /clear` 调用clear服务使得参数的修改能生效
+  - `rosparam get /turtlesim/background_g` 查看参数服务器上其他参数的值。获取背景的绿色通道的值
+  - `rosparam get /` 显示参数服务器上的所有内容
+  - `rosparam dump param.yaml` 将所有的参数写入params.yaml文件
+  - `rosparam load params.yaml copy_turtle` 将yaml文件重载入新的命名空间，例如copy_turtle
 - rqt_console
   
 - roslaunch
+  - roslaunch可以用来启动定义在launch（启动）文件中的节点
+  - 
   
 - rosed
   
