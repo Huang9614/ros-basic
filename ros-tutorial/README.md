@@ -52,44 +52,39 @@
       ‵``
         
 ## ROS节点 `rosnode`
-  - `rosnode list` 显示当前正在运行的ROS节点信息
-  - `rosnode info /rosout` 返回的是某个指定节点`/rosout`的信息
-  - `rosrun turtlesim turtlesim_node` 运行turtlesim包中的turtlesim_node
-    - `rosrun turtlesim turtlesim_node __name:=my_turtle` 使用重映射参数来改变节点名称
-  - `rosnode ping my_turtle` 使用另外一个rosnode指令，ping，来测试rosnode `my_turtle` 是否正常
+节点实际上只不过是ROS软件包中的一个可执行文件。ROS节点使用ROS客户端库与其他节点通信。节点可以发布或订阅话题，也可以提供或使用服务。ROS客户端库可以让用不同编程语言编写的节点进行相互通信
+
+1. 首先要运行 `roscore`
+2. `rosnode list` 显示当前正在运行的ROS节点
+3. `rosnode info /rosout` 返回的是指定节点`/rosout`的信息
+4. `rosrun turtlesim turtlesim_node` 用包名直接运行软件包内的节点（而不需要知道包的路径）；在这里是运行 `turtlesim` 包中的 `turtlesim_node`
+   - `rosrun turtlesim turtlesim_node __name:=my_turtle` 使用重映射参数来改变节点名称
+   
 
 ## ROS话题 `rostopic`
+1. 首先要运行 `roscore`
+2. 在新终端中运行 `turtlesim_node`节点： `rosrun turtlesim turtlesim_node`
+3. 运行 `turtlesim` 包中的另一个节点，从而实现用键盘控制乌龟运动： `rosrun turtlesim turtle_teleop_key` 
+4. `turtlesim_node` 节点和 `turtle_teleop_key` 节点之间是通过一个ROS话题来相互通信的。turtle_teleop_key在话题上发布键盘按下的消息，turtlesim则订阅该话题以接收消息。
+5. 查看当前运行了哪些话题： `rostopic list`
+   - `rostopic list -h` 查看一下list子命令需要的参数
+   - `rostopic list -v` 会列出所有发布和订阅的主题及其类型的详细信息
+7. 使用 `rqt_graph` 来显示当前运行的节点和话题：`rosrun rqt_graph rqt_graph`。可以看到，`turtlesim_node`和`turtle_teleop_key`节点正通过一个名为`/turtle1/cmd_vel`的话题来相互通信。
+8. `rostopic echo /turtle1/cmd_vel` 显示在某个话题上发布的数据; 再看一下rqt_graph, `rostopic echo` 现在也订阅了turtle1/command_velocity话题。
 
-  first run `turtle_teleop_key` and `turtlesim_node` in the rospkg `turtlesim`
-  ```bash
-  roscore
-  rosrun turtlesim turtlesim_node
-  rosrun turtlesim turtle_teleop_key
-  ```
-  turtlesim_node节点和turtle_teleop_key节点之间是通过一个ROS话题来相互通信的。turtle_teleop_key在话题上发布键盘按下的消息，turtlesim则订阅该话题以接收消息。使用rqt_graph来显示当前运行的节点和话题
+## ROS消息 `rosmsg`
+`rostopic` 话题的通信是通过节点间发送ROS消息实现的。发布者和订阅者必须发送和接收相同类型的消息。这意味着话题的类型是由发布在它上面消息的类型决定的。
 
-  ```bash
-  sudo apt install ros-noetic-rqt
-  rosrun rqt_graph rqt_graph
-  ```
-  可以看到，`turtlesim_node`和`turtle_teleop_key`节点正通过一个名为`/turtle1/cmd_vel`的话题来相互通信。
-
-  - `rostopic -h` 使用帮助选项查看可用的rostopic的子命令; 或者在输入rostopic 之后双击Tab键输出可能的子命令
-  - `rostopic echo /turtle1/cmd_vel` 显示在某个话题上发布的数据; 再看一下rqt_graph, rostopic echo现在也订阅了turtle1/command_velocity话题。
-  - `rostopic list -h` 查看一下list子命令需要的参数
-  - `rostopic list -v` 会列出所有发布和订阅的主题及其类型的详细信息
-
-  话题的通信是通过节点间发送ROS消息实现的。发布者和订阅者必须发送和接收相同类型的消息。这意味着话题的类型是由发布在它上面消息的类型决定的。使用rostopic type命令可以查看发布在话题上的消息的类型。
-  - `rostopic type /turtle1/cmd_vel` 查看所发布话题的消息类型
-  - `rosmsg show geometry_msgs/Twist` 使用rosmsg查看消息的详细信息
-    -  `rosmsg list` show all rosmsgs
-  - `rostopic pub -1 /turtle1/cmd_vel geometry_msgs/Twist -- '[2.0, 0.0, 0.0]' '[0.0, 0.0, 1.8]'` 把数据发布到当前某个正在广播的话题上
+1. `rostopic type /turtle1/cmd_vel` 查看发布在话题 `turtle1/cmd_vel` 上的消息的类型。可以看到，在这个话题上，到目前为止，只有一个消息 `geometry_msgs/Twist` 
+2. `rosmsg show geometry_msgs/Twist` 使用rosmsg查看消息的详细信息
+    -  `rosmsg list` 显示所有话题
+3. 在话题 `/turtle1/cmd_vel` 上手动发布类型为 `geometry_msgs/Twist` 的消息：`rostopic pub -1 /turtle1/cmd_vel geometry_msgs/Twist -- '[2.0, 0.0, 0.0]' '[0.0, 0.0, 1.8]'` 
     - `-l` 让rostopic只发布一条消息，然后退出
     - `--` 这一选项（两个破折号）用来告诉选项解析器，表明之后的参数都不是选项。如果参数前有破折号（-）比如负数，那么这是必需的。
-    - `'[2.0, 0.0, 0.0]' '[0.0, 0.0, 1.8]' ` 一个turtlesim/Velocity消息有两个浮点型元素：linear和angular。在本例中，'[2.0, 0.0, 0.0]'表示linear的值为x=2.0, y=0.0, z=0.0，而'[0.0, 0.0, 1.8]'是说angular的值为x=0.0, y=0.0, z=1.8。这些参数实际上使用的是YAML语法
-    - `rostopic pub /turtle1/cmd_vel geometry_msgs/Twist -r 1 -- '[2.0, 0.0, 0.0]' '[0.0, 0.0, -1.8]'` 使用`rostopic pub -r` 来发布源源不断的命令
-  - `rostopic hz /turtle1/pose` 报告turtlesim_node发布/turtle/pose数据速率
-  - `rosrun rqt_plot rqt_plot` 在滚动时间图上显示发布到某个话题上的数据
+    - `'[2.0, 0.0, 0.0]' '[0.0, 0.0, 1.8]' ` 一个 `geometry/Twist` 消息有两个浮点型元素：linear和angular。在本例中，'[2.0, 0.0, 0.0]'表示linear的值为x=2.0, y=0.0, z=0.0，而'[0.0, 0.0, 1.8]'是说angular的值为x=0.0, y=0.0, z=1.8。这些参数实际上使用的是YAML语法
+4. `rostopic pub /turtle1/cmd_vel geometry_msgs/Twist -r 1 -- '[2.0, 0.0, 0.0]' '[0.0, 0.0, -1.8]'` 使用`rostopic pub -r` 来发布源源不断的命令。此时，发现rqt_graph中又多了一个节点，用于在话题 `/turtle1/cmv_vel` 话题上发消息，并且之前的两个节点 `turtlesim_node` 和 `rostopic echo` 也订阅了
+5. `rostopic hz /turtle1/pose` 报告turtlesim_node发布/turtle/pose数据速率
+6. `rosrun rqt_plot rqt_plot` 在滚动时间图上显示发布到某个话题上的数据
 
 ## ROS服务 `rosservice`
   服务（Services）是节点之间通讯的另一种方式。服务允许节点发送一个请求（request）并获得一个响应（response）; rosservice可以很容易地通过服务附加到ROS客户端/服务器框架上
