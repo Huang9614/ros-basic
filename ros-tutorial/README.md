@@ -11,48 +11,54 @@
     - 直接按软件包的名称执行 ls 命令（而不必输入绝对路径）
   - `rospack find <pkg-name>` 返回软件包的所在路径
 
-- rospkg
+## `rospkg` 软件包
+  
   1. basic requirements
      - 这个包必须有一个符合catkin规范的`package.xml`文件; 这个`package.xml`文件提供有关该软件包的元信息
      - 这个包必须有一个catkin版本的`CMakeLists.txt`文件; 如果它是个Catkin元包的话，则需要有一个`CMakeList.txt`文件的相关样板
-     - 每个包必须有自己的目录; 这意味着在同一个目录下不能有嵌套的或者多个软件包存在 
-  2. create and catkin_make a initial empty rospkg
+     - 每个包必须有自己的目录; 这意味着在同一个目录下不能有嵌套的或者多个软件包存在
+       
+  2. 创建`catkin`工作区以及软件包
      ```bash
      mkdir -p catkin_ws/src
      cd catkin_ws/src
      catkin_create_pkg beginner_tutorials std_msgs rospy roscpp
      ```
-     Then you should find new `/include`, `/src/` folders and `CMakeLists.txt`, `package.xml` files in the `~/catkin_ws/src/beginner_tutorial`
-
+     这里的`catkin_ws` 就是我们的工作区，`catkin_ws/src` 文件夹中又出现了一个文件夹，名为 `beginner_tutorials`，这个文件夹就是ros软件包；在这个包内，可以发现两个文件夹 `/include`, `/src/` 和两个文件： `CMakeLists.txt`, `package.xml`
+      
+  3. 构建 （`catkin_make`） 创建好的软件包
      ```bash
      cd ~/catkin_ws
      catkin_make
      ```
-     上述命令会构建src目录下的所有catkin项目.
+     我们返回到 `catkin_ws` 工作区中，执行 `catkin_make`，上述命令会构建 `/catkin_make/src` 目录下的所有catkin项目，也就是软件包.
      
-     Then you should find new folders `build` and `devel` in the `~/catkin_ws` folder, also a new `CMakeLists.txt` file in the `~/catkin_ws/src` folder.
+     然后在 `catkin_ws` 文件夹中，除了刚刚自己建立的 `catkin_ws/src` 文件夹，还多出来两个文件夹：`catkin_ws/build` and `catkin_ws/devel` ，同时，在 `catkin_ws/src` 文件夹中，多了一个 `CMakeLists.txt` 文件。
 
-     `build` 目录是构建空间的默认位置，同时cmake和make也是在这里被调用来配置和构建你的软件包。而`devel` 目录是开发空间的默认位置, 在安装软件包之前，这里可以存放可执行文件和库。
+     `catkin_ws/build` 目录是构建空间的默认位置，同时cmake和make也是在这里被调用来配置和构建你的软件包。而 `catkin_ws/devel` 目录是开发空间的默认位置, 在安装软件包之前，这里可以存放可执行文件和库。
      
-     如果你的源代码不在默认位置（catkin_ws/src），比如说存放在了my_src中，那可以这样来使用catkin_make:
+     如果你的源代码不在默认位置（`catkin_ws/src`），比如说存放在了 `catkin_ws/my_src` 中，那可以这样来使用catkin_make:
      `catkin_make --source my_src`
 
-     ```bash
-     . ~/catkin_ws/devel/setup.bash
-     ```
-     将这个工作空间添加到ROS环境. You can check whether the path of your pakgage is already added by running
-     ```bash
-     echo $ROS_PACKAGE_PATH
-     ```
-     
-- rosnode
+   4. 将工作区 `catkin_ws` 添加到ROS环境中中
+      ```bash
+      . ~/catkin_ws/devel/setup.bash
+      ```
+      将这个工作空间添加到ROS环境.
+
+      查看catkin工作区路径
+      ```bash
+      echo $ROS_PACKAGE_PATH
+      ‵``
+        
+## ROS节点 `rosnode`
   - `rosnode list` 显示当前正在运行的ROS节点信息
   - `rosnode info /rosout` 返回的是某个指定节点`/rosout`的信息
   - `rosrun turtlesim turtlesim_node` 运行turtlesim包中的turtlesim_node
     - `rosrun turtlesim turtlesim_node __name:=my_turtle` 使用重映射参数来改变节点名称
   - `rosnode ping my_turtle` 使用另外一个rosnode指令，ping，来测试rosnode `my_turtle` 是否正常
 
-- rostopic
+## ROS话题 `rostopic`
 
   first run `turtle_teleop_key` and `turtlesim_node` in the rospkg `turtlesim`
   ```bash
@@ -85,7 +91,7 @@
   - `rostopic hz /turtle1/pose` 报告turtlesim_node发布/turtle/pose数据速率
   - `rosrun rqt_plot rqt_plot` 在滚动时间图上显示发布到某个话题上的数据
 
-- rosservice
+## ROS服务 `rosservice`
   服务（Services）是节点之间通讯的另一种方式。服务允许节点发送一个请求（request）并获得一个响应（response）; rosservice可以很容易地通过服务附加到ROS客户端/服务器框架上
 
   ```bash
@@ -99,7 +105,9 @@
   - `rosservice type /clear` 看clear服务的类型
     - 服务的类型为empty（空），这表明调用这个服务时不需要参数（即，它在发出请求时不发送数据，在接收响应时也不接收数据）
   - `rosservice call /clear` 因为服务的类型为empty，所以进行无参数调用;
-- rosparam
+
+
+## ROS参数 `rosparam`
   - rosparam能让我们在ROS参数服务器（Parameter Server）上存储和操作数据
   - rosparam使用YAML标记语言的语法。一般而言，YAML的表述很自然：1是整型，1.0是浮点型，one是字符串，true是布尔型，[1, 2, 3]是整型组成的列表，{a: b, c: d}是字典
   - `rosparam list` 可以看到turtlesim节点在参数服务器上有3个参数用于设定背景颜色
@@ -109,26 +117,29 @@
   - `rosparam get /` 显示参数服务器上的所有内容
   - `rosparam dump param.yaml` 将所有的参数写入params.yaml文件
   - `rosparam load params.yaml copy_turtle` 将yaml文件重载入新的命名空间，例如copy_turtle
-- rqt_console
+
+ 
+## `rqt_console`
   
-- roslaunch
+
+## `roslaunch`
   - roslaunch可以用来启动定义在launch（启动）文件中的节点
   - 
   
-- rosed
+## `rosed`
   
-- 创建和构建msg和srv文件
+## 创建和构建msg和srv文件
   
-- 用C++编写发布者和订阅者节点
+## 用C++编写发布者和订阅者节点
   
-- 运行及测试发布者和订阅者
+## 运行及测试发布者和订阅者
   
-- 用C++编写服务和客户端节点
+## 用C++编写服务和客户端节点
   
-- 运行及测试服务和客户端
+## 运行及测试服务和客户端
   
-- 录制和回放数据
-  
+## 录制和回放数据
+
 - 从bag文件中读取所需话题的消息的两种方法
 
 ## Distinguish
