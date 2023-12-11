@@ -50,6 +50,7 @@
       ```bash
       echo $ROS_PACKAGE_PATH
       ‵``
+    5. `rospack find turtlesim` 查找ROS包的路径
         
 ## ROS节点 `rosnode`
 节点实际上只不过是ROS软件包中的一个可执行文件。ROS节点使用ROS客户端库与其他节点通信。节点可以发布或订阅话题，也可以提供或使用服务。ROS客户端库可以让用不同编程语言编写的节点进行相互通信
@@ -96,35 +97,136 @@
   rosservice find         按服务的类型查找服务
   rosservice uri          输出服务的ROSRPC uri
   ```
-  - `rosservice list` 输出活跃de服务
-  - `rosservice type /clear` 看clear服务的类型
-    - 服务的类型为empty（空），这表明调用这个服务时不需要参数（即，它在发出请求时不发送数据，在接收响应时也不接收数据）
-  - `rosservice call /clear` 因为服务的类型为empty，所以进行无参数调用;
+1. `roscore && rosrun turtlesim turtlesim_node` 运行 `turtlesim` 包中的 `turtlesim_node` 结点
+2. `rosservice list` 查看当前活跃的服务列表，按理说应该有11个，9个和 `turtlesim_node` 相关，2个和 `rosout` 结点相关
+3. `rosservice type /clear` 查看看 `/clear` 服务的类型；得到的输出为 `std_srvs/Empty`，也就是说服务的类型为空，这表明调用这个服务时不需要参数（即，它在发出请求时不发送数据，在接收响应时也不接收数据）
+4. `rosservice call /clear` 调用 `/clear` 服务；因为服务的类型为empty，所以进行无参数调用; 结果是清除了历史运动痕迹
+5. `rosservice type /spawn | rossrv show` 查看 `/spawn` 服务的类型，为 `turtlesim/Spawn` 并且查看该类型的详细信息；它将列出服务的请求（输入）和响应（输出）消息的结构，包括消息字段和它们的数据类型
+   - `rosservice call /spawn 2 2 0.2 ""` 根据该服务的具体信息可知，调用该服务时，需要输入三个浮点数以及一个字符串：即在给定的位置和角度生成一只新的乌龟。name字段是可选的，这里我们不设具体的名字，让turtlesim自动创建一个。 结果返回一个字符串： `name: Turtle2` 
 
 
 ## ROS参数 `rosparam`
-  - rosparam能让我们在ROS参数服务器（Parameter Server）上存储和操作数据
-  - rosparam使用YAML标记语言的语法。一般而言，YAML的表述很自然：1是整型，1.0是浮点型，one是字符串，true是布尔型，[1, 2, 3]是整型组成的列表，{a: b, c: d}是字典
-  - `rosparam list` 可以看到turtlesim节点在参数服务器上有3个参数用于设定背景颜色
-  - `rosparam set /turtlesim/background_r 150` 修改背景颜色的红色通道值
-  - `rosservice call /clear` 调用clear服务使得参数的修改能生效
-  - `rosparam get /turtlesim/background_g` 查看参数服务器上其他参数的值。获取背景的绿色通道的值
-  - `rosparam get /` 显示参数服务器上的所有内容
-  - `rosparam dump param.yaml` 将所有的参数写入params.yaml文件
-  - `rosparam load params.yaml copy_turtle` 将yaml文件重载入新的命名空间，例如copy_turtle
+`rosparam` 能让我们在ROS参数服务器（Parameter Server）上存储和操作数据。其使用 `yaml` 标记语言的语法。一般而言，`yaml` 的表述很自然：1是整型，1.0是浮点型，one是字符串，true是布尔型，[1, 2, 3]是整型组成的列表，{a: b, c: d}是字典
+
+```bash
+rosparam list 可以看到turtlesim节点在参数服务器上有3个参数用于设定背景颜色
+rosparam set /turtlesim/background_r 150  修改背景颜色的红色通道值
+rosservice call /clear  调用clear服务使得参数的修改能生效
+rosparam get /turtlesim/background_g  查看看参数服务器上其他参数的值。获取背景的绿色通道的值
+rosparam get /  显示参数服务器上的所有内容
+rosparam dump param.yaml  将所有的参数写入params.yaml文件
+rosparam load params.yaml copy_turtle  将yaml文件重载入新的命名空间，例如copy_turtle
+```
+
+1. `roscore && rosrun turtlesim turtlesim_node`
+2. `rosparam list` 查看参数列表，其中 `/turtlesim` 节点有三个用于改变颜色的参数
+3. `rosparam set /turtlesim/background_r 150` 更改其中某个参数的数值，这里将红色通道改成了150
+4. `rosservice call /clear` 调用 `/clear` 服务使得上述修改生效
+5. `rosparam get /turtlesim/background_g` 查看绿色通道的数值
+6. `rosparam dump params.yaml` 将所有的参数写入params.yaml文件
+7. `rosparam load params.yaml copy_turtle` 将 `.yaml` 文件重载入新的命名空间：`copy_turtle`
+   - `rosparam get /copy_turtle/turtlesim/background_b`
+   - `rosparam get /` 此时可以看到有两个一模一样的参数块；只不过一个是以 `copy_turtle` 开始的，一个没有开头；没有开头的这部分是全局参数，没有命名空间前缀
+   - `rosparam delete /copy_turtle` 可以将该命名空间删除；此时， `rosparam get /` 将返回和一开始一样的形式
 
  
 ## `rqt_console`
   
 
 ## `roslaunch`
-  - roslaunch可以用来启动定义在launch（启动）文件中的节点
-  - 
+roslaunch可以用来启动定义在launch（启动）文件中的节点。
+
+### [`.launch` 文件](http://wiki.ros.org/cn/ROS/Tutorials/UsingRqtconsoleRoslaunch)
+在ROS（Robot Operating System）中，launch文件是一种用于启动和配置ROS节点的XML格式文件。这些文件被称为“launch文件”是因为它们通常用于启动一个或多个ROS节点，以便配置整个机器人系统的运行环境。
+
+主要作用包括：
+- 启动节点（Nodes）： Launch文件可以指定要启动的ROS节点。节点是ROS中的基本执行单元，负责执行特定的任务或功能。
+- 设定参数（Parameters）： 你可以使用launch文件来设置ROS参数，这些参数将传递给节点，影响其行为。
+- 创建命名空间（Namespaces）： 通过launch文件，你可以为一组节点创建一个独立的命名空间，以避免命名冲突和组织节点。
+- 连接节点（Remappings）： Launch文件允许你重新映射节点的输入和输出话题，服务和参数，以便更灵活地配置节点之间的通信。
+- 使用条件（Conditions）： 你可以使用条件语句在运行时基于某些条件选择性地启动或配置节点。
+- 包含其他launch文件（Inclusion）： Launch文件可以包含其他launch文件，使其更模块化和易于维护。
+
+### 创建 `.launch` 文件
+1. `roscd beginner_tutorial && ls` 返回ROS包的文件夹；到目前为止，这个文件夹中包含的内容，还是在 `catkin_create_pkg` 之后形成的
+2. `mkdir launch && cd launch` 为 `.launch` 文件创建文件夹；当然，存放launch文件的目录不一定非要命名为launch，事实上都不用非得放在目录中，roslaunch命令会自动查找经过的包并检测可用的启动文件。
+3. 创建 `turtlemimic.launch` 文件
+4. `roslaunch beginner_tutorials turtlemimic.launch` 使用 `roslaunch` 运行指定包中的指定`.launch`文件
+
+
   
 ## `rosed`
-  
+rosed是rosbash套件的一部分。利用它可以直接通过软件包名编辑包中的文件，而无需键入完整路径。比如 `rosed beginner_tutorials [Tap][Tap]` 可以查看这个包有哪些可以编辑的文件，然后选择一个进行编辑，比如 `rosed beginner_tutorials package.xml`
+
+
 ## 创建和构建msg和srv文件
-  
+msg（消息）：msg文件就是文本文件，每行都有一个字段类型和字段名称,用于描述ROS消息的字段。它们用于为不同编程语言编写的消息生成源代码；srv（服务）：一个srv文件描述一个服务。它由两部分组成：请求（request）和响应（response）。 
+
+msg文件存放在软件包的 `/msg` 目录下，srv文件则存放在 `/srv` 目录下。
+
+msg文件可以使用的数据类型包括：int8, int16, int32, int64 (以及 uint*)；float32, float64；string；time, duration；其他msg文件；variable-length array[] 和 fixed-length array[C]。ROS中还有一个特殊的数据类型：Header，它含有时间戳和ROS中广泛使用的坐标帧信息。在msg文件的第一行经常可以看到Header header。
+
+下面是一个msg文件，它使用了Header，string，和其他另外两个消息的类型；其中 `geometry_msgs` 为ROS包名，可以用 `rospack find geometry_msgs` 找到这个包所在的路径，或者直接 `roscd geometry_msgs` 进入该ROS包； `PoseWithCovariance` 和 `TwistWithCovariance` 其实是两个 `.msg` 文件，定义了两个消息类型。
+
+```bash
+  Header header
+  string child_frame_id
+  geometry_msgs/PoseWithCovariance pose  
+  geometry_msgs/TwistWithCovariance twist
+```
+
+srv文件和msg文件一样，只是它们包含两个部分：请求和响应。这两部分用一条---线隔开，如：
+
+```bash
+int64 A
+int64 B
+---
+int64 Sum
+```
+
+### 创建 `.msg` 文件
+1. `roscd beginner_tutorials && ls` 现在可以看到有三个文件夹，包括经过 `catkin_create_pkg` 得到的 `/include` 和 `/src` 文件夹，以及上一节创建的 `/launch` 文件夹
+2. `mkdir msg` 创建新文件夹 `/msg`， 专门用来存放自定义的消息类型
+3. `echo "int64 num" > msg/Num.msg` 在该文件夹中创建新的消息类型文件 `Num.msg`，里面有一个消息类型：`int64 num`
+/-------------接下来需要保证这个文件能够被转换成C++或者Python代码----------------/
+5. 打开package.xml, 确保它包含以下两行且没有被注释。
+```bash
+<build_depend>message_generation</build_depend>
+<exec_depend>message_runtime</exec_depend>
+```
+6. `roscd beginner_tutorials CMakeLists.txt` 打开CMakeLists.txt文件；或者用vim也行，无所谓
+7. 为已经存在里面的 `find_package(...)` 添加 `message_generation` 依赖项，这样就能生成消息了。直接将message_generation添加到COMPONENTS列表中即可
+8. 在 `CMakeLists.txt` 中找到 `catkin_package()`，在其中添加依赖 `CATKIN_DEPENDS roscpp rospy std_msgs message_runtime`，从而确保导出消息的运行时依赖关系
+9. 在 `CMakeLists.txt` 的 `Declare ROS messages, services and actions` 模块中找到 `add_message_files()`，添加 `FILES Num.msg`。`add_message_files` 是一个CMake指令，用于告诉ROS构建系统你的软件包包含哪些自定义消息文件，你需要将实际的消息文件名列在 `FILES` 后面
+10. 还是在 `Declare ROS messages, services and actions` 模块中，找到 `generate_messages()`，添加 `DEPENDENCIES std_msgs`；手动添加.msg文件后，我们要确保generate_messages()函数被调用，也就是确保CMake知道何时需要重新配置项目。 `generate_messages` 指令用于告诉ROS构建系统，你的软件包包含了自定义消息，并需要生成相应的消息源代码和编译。`DEPENDENCIES` 后面的 `std_msgs` 表示你的自定义消息依赖于 `std_msgs` 这个标准消息包。这是因为你的自定义消息可以使用 `std_msgs` 中定义的基本消息类型作为字段。
+
+
+
+#### CMakeLists.txt中 `find_package()` 的用法说明
+`find_package()` 是CMake构建系统中用于在系统中查找和定位外部软件包的命令。它通常与catkin构建系统一起使用，用于在ROS中声明和定位依赖的软件包。
+
+一般来说，`find_package()` 的一般使用方法如下：
+```bash
+find_package(<Package> [version] [EXACT] [QUIET] [MODULE]
+             [REQUIRED] [[COMPONENTS] [components...]])
+```
+- <Package>: 要查找的软件包的名称。
+- version: 软件包的版本要求。
+- EXACT: 如果指定了版本，表示要求精确匹配该版本。
+- QUIET: 不生成任何错误消息，如果找不到软件包，它将默默地失败。
+- MODULE: 指示查找CMake模块而不是配置文件。
+- REQUIRED: 表示找不到软件包将导致构建失败。
+- COMPONENTS: 指定软件包的组件。COMPONENTS 的使用是ROS构建系统的一种约定，用于指定ROS软件包的具体模块或功能。而对于一些非ROS的软件包，它们可能不需要这种额外的细粒度的声明，因为它们的设计和构建方式可能与ROS软件包有所不同；比如 OpenCV
+
+#### CMakeLists.txt中 `catkin_package()` 的用法说明
+`find_package` CMake的一部分，用于找到和配置构建工具和外部库，而 `catkin_package` 是ROS构建系统的一部分，用于告诉 `catkin` 构建系统关于软件包的元信息和依赖关系
+
+- `catkin_package` 用于配置和声明ROS软件包的一些元信息，主要是为了告诉 catkin 构建系统关于当前软件包的一些特定信息。
+- 它用于指定ROS软件包的依赖关系，包括运行时所需的ROS软件包，以及其他依赖项。
+- `catkin_package` 还用于配置消息生成，特别是当软件包包含自定义消息、服务或行为时
+
+
+
 ## 用C++编写发布者和订阅者节点
   
 ## 运行及测试发布者和订阅者
