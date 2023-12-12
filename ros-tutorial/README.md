@@ -267,12 +267,29 @@ rosmsg -h 查看帮助
 
 ## 用C++编写发布者和订阅者节点
 1. `roscd beginner_tutorials && cd src && ls` 可以看到，当前这个ROS包中，其实什么没有任何节点的，也就是说，`beginner_tutorials/src` 中什么也没有
-2. `wget https://raw.github.com/ros/ros_tutorials/kinetic-devel/roscpp_tutorials/talker/talker.cpp` 
+2. `wget https://raw.github.com/ros/ros_tutorials/kinetic-devel/roscpp_tutorials/talker/talker.cpp` 发布者
+   - `std_msgs::String msg;` 涉及到 `模板结构体`，`智能指针` 和 结构体中成员的引用
+3. `wget https://raw.github.com/ros/ros_tutorials/kinetic-devel/roscpp_tutorials/listener/listener.cpp`
+   - `void chatterCallback(const std_msgs::String::ConstPtr& msg){...}` 这里的`std_msgs::String`是一个模板结构体，其中有一段 `typedef boost::shared_ptr< ::std_msgs::String_<ContainerAllocator> const> ConstPtr;` 这个`ConstPtr`也能算是结构体的成员？？？结构体的成员不应该用 `.` 访问么？
+4. 在 `/beginner_tutorials/CMakeLists.txt` 的 `Build` 模块中，加入下面这段指令；这将创建两个可执行文件talker和listener，默认情况下，它们将被放到软件包目录下的 `devel` 空间中。`catkin_make` 之前，在 `catkin_ws/devel` 文件夹中只有两个文件夹 `python3` 和 `pkgconfig`，和目前的工作无关
+   ```bash
+   add_executable(talker src/talker.cpp)
+   target_link_libraries(talker ${catkin_LIBRARIES})
+   add_dependencies(talker beginner_tutorials_generate_messages_cpp) 为可执行目标添加依赖项到消息生成目标，这确保了在使用此包之前生成了该包的消息头
 
-
+   add_executable(listener src/listener.cpp)
+   target_link_libraries(listener ${catkin_LIBRARIES})
+   add_dependencies(listener beginner_tutorials_generate_messages_cpp)
+   ```
+5. 返回 `catkin_ws` 中，执行 `catkin_make`。然后，在文件夹 `catkin_ws/devel` 文件夹中就会出现第三个文件夹 `beginner_tutorials`，其中包含了 `listener` 和 `talker` 两个可执行文件
 
 ## 运行及测试发布者和订阅者
-  
+想要检验刚刚创建的两个节点是否可用，则只要用`rosrun`来看看效果就行
+1. `roscore`
+2. `rosrun beginner_tutorials talker`
+3. `rosrun beginner_tutorials listener`
+
+
 ## 用C++编写服务和客户端节点
   
 ## 运行及测试服务和客户端
