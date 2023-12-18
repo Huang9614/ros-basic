@@ -3,7 +3,7 @@
 ## 总结
 
 ### 文件夹层级结构
-![Cover](ros-tutorial/catkin_ws.png)
+![Cover](./catkin_ws.png)
 
 ### `catkin_ws/src` 中 `CMakeLists.txt` 文件大体内容
 
