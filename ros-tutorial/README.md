@@ -271,6 +271,7 @@ rosmsg -h 查看帮助
    - `std_msgs::String msg;` 涉及到 `模板结构体`，`智能指针` 和 结构体中成员的引用
 3. `wget https://raw.github.com/ros/ros_tutorials/kinetic-devel/roscpp_tutorials/listener/listener.cpp`
    - `void chatterCallback(const std_msgs::String::ConstPtr& msg){...}` 这里的`std_msgs::String`是一个模板结构体，其中有一段 `typedef boost::shared_ptr< ::std_msgs::String_<ContainerAllocator> const> ConstPtr;` 这个`ConstPtr`也能算是结构体的成员？？？结构体的成员不应该用 `.` 访问么？
+     - 是的。这里的 `boost::shared_ptr` 是Boost库中定义的共享指针类型，不能当作普通成员看，类似的还有在编写服务端节点和客户端节时的 `beginner_tutorials::AddTwoInts::Request  &req` 和 `beginner_tutorials::AddTwoInts::Responce  &res`
 4. 在 `/beginner_tutorials/CMakeLists.txt` 的 `Build` 模块中，加入下面这段指令；这将创建两个可执行文件talker和listener，默认情况下，它们将被放到软件包目录下的 `devel` 空间中。`catkin_make` 之前，在 `catkin_ws/devel` 文件夹中只有两个文件夹 `python3` 和 `pkgconfig`，和目前的工作无关
    ```bash
    add_executable(talker src/talker.cpp)
@@ -291,9 +292,41 @@ rosmsg -h 查看帮助
 
 
 ## 用C++编写服务和客户端节点
-  
+
+### 编写服务节点：实现之前定义的 `.srv` 文件功能的 `.cpp` 文件
+1. 在提供的 `add_two_ints_server.cpp` 文件中，定义了一个 `add` 函数，该函数有两个形参，分别声明为 `beginner_tutorials::AddTwoInts::Request  &req` 和 `beginner_tutorials::AddTwoInts::Responce  &res`
+   - 这个 `add` 函数实际上提供了 `AddTwoInts.srv` 服务，它接受srv文件中定义的请求（request）和响应（response）类型，并返回一个布尔值。 
+   - 引用调用。在调用 `add` 函数时，要求输入一个 `beginner_tutorials::AddTwoInts::Request` 类型的参数，并且在函数内对形参 `req` 和 `res` 的改变会影响到输入到该函数的实参
+   - 在 `AddTwoInts.h` 文件中，定义了命名空间 `beginner_tutorials`，其中包括了 `AddTwoInts`，这是一个结构体，所以第一个域解析操作符 `::`是用来指定命名空间中的某个成分；而`typedef AddTwoIntsRequest Request;` 是指将结构体 `AddTwoIntsRequest` 重命名, 这个结构体定义在 `AddTwoIntsRequest.h` 中；所以第二个域解析操作符 `::` 是用来引用结构体 `AddTwoInts` 中嵌套的结构体 `AddTwoIntsRequest`。
+2. `ROS_INFO` 是预定义的宏，还不确定在哪个文件中定义的
+3. `ros::ServiceClient client`是在 `/opt/ros/noetic/include/ros` 中定义在 `ros` 这个名称空间中的一个类，实例化为 `client`，并且用 `ros::NodeHandle` 中的
+
+
+### 编写客户端节点
+1. `beginner_tutorials::AddTwoInts srv;` 加上 `srv.request.a`。这里有点奇怪，因为 `AddTwoInts` 应该是一个结构体，而不是类，但是在官网上的解释，却是将这个说成了一个类。结构体中的子结构体成员 `request` 定义在 `AddTwoIntsRequest.cpp` 中，该结构体中有两个成员 `a(0)` 和 `b(0)`
+2. `ros::ServiceServer service`是在 `/opt/ros/noetic/include/ros` 中定义在 `ros` 这个名称空间中的一个类，并且使用了 `ros::NodeHandle` 这个类中的 `serviceClient` 模板函数返回的对象进行初始化
+
+
+### 修改 `CMakeLists.txt` 文件
+1. 该文件位于 `~/ros-basic/ros-tutorial/catkin_ws/src/beginner_tutorials` 专指编译 `beginner_tutorials` 这个ROS包的CMAKE文件
+2. 修改 `CMakeLists.txt`
+   ```bash
+   add_executable(add_two_ints_server src/add_two_ints.server.cpp)
+   target_link_libraries(add_two_ints_server ${catkin_LIBRARIES})
+   add_dependencies(add_two_ints_server beginner_tutorials_generate_messages_cpp)
+    
+   add_executable(add_two_ints_client src/add_two_ints_client.cpp)
+   target_link_libraries(add_two_ints_client ${catkin_LIBRARIES})
+   add_dependencies(add_two_ints_client beginner_tutorials_generate_messages_cpp)
+  ```
+3. `~/ros-basic/ros-tutorial/catkin_ws/devel/lib/beginner_tutorials && ls` 可以发现，其中仍然只含有 `talker` 和 `listener`；当我们返回 `/catkin_ws` 目录下后 `catkin_make`，则可以在 `./devel/lib/beginner_tutorials` 中发现两个新的可执行文件。你可以直接调用可执行文件，也可以使用rosrun来调用它们
+
+
 ## 运行及测试服务和客户端
-  
+1. `rosrun beginner_tutorials add_two_ints_server` 运行服务
+2. `rosrun beginner_tutorials add_two_ints_client` 运行客户端
+
+
 ## 录制和回放数据
 
 - 从bag文件中读取所需话题的消息的两种方法
